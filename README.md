@@ -1,23 +1,37 @@
-# 6-DOF Kinematic State Estimation: Fully Coupled 3D Kalman Filter
+# Kalman Filter Implementations (C++ / Eigen)
 
-This repository provides a robust C++ implementation of a fully coupled 6-dimensional Kalman Filter, explicitly designed for the state estimation of marine vehicles (e.g., Autonomous Underwater Vehicles). It estimates the 3D position ($X, Y, Z$) and dynamically extracts the hidden 3D velocity states (surge, sway, and heave rates) from noisy positional data using a Constant Velocity (CV) kinematic model.
+This repository contains a collection of robust C++ implementations for state estimation, progressing from standard linear Kalman Filters to correlated noise models, and eventually Extended Kalman Filters (EKFs). All algorithms utilize the `Eigen3` linear algebra library for computationally efficient, full-matrix formulations.
 
+---
 
+## 1. 6-DOF Kinematic State Estimation
+**File:** `KalmanFilter.cpp`
 
-## Methodological Overview
-Unlike decoupled approximations that assume orthogonal independence, this implementation utilizes a rigorous full-matrix state-space formulation. The state vector is defined as $x = [p^T, v^T]^T \in \mathbb{R}^6$. By maintaining the full $6 \times 6$ covariance matrix $P$, the filter accurately captures and updates the cross-correlations between positional errors and velocity estimates. 
+A fully coupled 6-dimensional linear Kalman Filter designed for the kinematic state estimation of marine vehicles (e.g., AUVs). 
 
-This pure kinematic observer serves as a foundational baseline before introducing more complex rigid body dynamics, hydrodynamic forces, or transitioning to an Extended Kalman Filter (EKF) for nonlinear system tracking.
+* **State Vector:** Tracks 3D position ($X, Y, Z$) and dynamically estimates hidden 3D velocity states (surge, sway, heave).
+* **Methodology:** Avoids decoupled approximations by maintaining the full $6 \times 6$ covariance matrix ($P$) to accurately capture cross-correlations between positional innovations and velocity corrections. 
+* **Model:** Constant Velocity (CV) kinematic tracking.
 
-## Key Features
-* **Coupled Matrix Formulation:** Implements the complete discrete-time algebraic Riccati equations for prediction and correction, avoiding dimensionality shortcuts.
-* **High-Performance Linear Algebra:** Leverages the industry-standard `Eigen3` C++ library for computationally efficient, mathematically expressive matrix operations.
-* **Stochastic Simulation Environment:** Includes a deterministic true-trajectory generator injected with Gaussian white noise ($v \sim \mathcal{N}(0, R)$) to validate filter convergence, transient response, and noise rejection capabilities in real-time.
+## 2. Correlated Process & Measurement Noise
+**File:** `CorrelatedNoiseKF.cpp`
 
-## Dependencies
-This project requires the **Eigen** linear algebra library for C++. 
+Standard Kalman Filter formulations assume process noise ($w$) and measurement noise ($v$) are completely independent. In severe environments, these noises often correlate ($E[w_k v_k^T] = C$).
 
-**For macOS users:**
-Install Eigen easily via Homebrew:
+* **State Vector:** A generalized $3 \times 3$ linear system.
+* **Methodology:** Natively modifies the discrete-time algebraic Riccati equations to incorporate a known cross-covariance matrix ($C$). 
+* **Validation:** The simulation constructs a $6 \times 6$ joint covariance matrix $\Sigma$ and uses Cholesky decomposition ($\Sigma = L L^T$) to accurately inject joint-normal multivariate noise into the simulation, proving the stability of the modified Kalman Gain and Innovation Covariance equations.
+
+---
+
+## Dependencies & Compilation (macOS)
+This project requires the **Eigen** linear algebra library. 
+
+Compile the individual experiments using `clang++`, ensuring the compiler is linked to the Eigen include directory:
+
 ```bash
-brew install eigen
+# Compile the 6-DOF Tracker
+clang++ -std=c++17 -I /opt/homebrew/include/eigen3 KalmanFilter.cpp -o kf_tracker
+
+# Compile the Correlated Noise Experiment
+clang++ -std=c++17 -I /opt/homebrew/include/eigen3 CorrelatedNoiseKF.cpp -o ckf_tracker
