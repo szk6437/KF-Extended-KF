@@ -1,6 +1,6 @@
 /**
  * @file FullyCoupledKalmanFilter.cpp
- * @brief A fully coupled 6D Extended Kalman Filter (EKF) for tracking 3D position and velocity.
+ * @brief A fully coupled 6D Linear Kalman Filter for tracking 3D position and velocity.
  * * This implementation uses the Eigen library to handle the 6x6 matrix algebra required
  * for a Constant Velocity (CV) kinematic model. It simulates an object (e.g., an AUV) 
  * moving through 3D space, generates noisy sensor measurements, and filters them 

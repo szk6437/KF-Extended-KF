@@ -1,0 +1,12 @@
+# Compiled C++ Executables
+kf_tracker
+ckf_tracker
+*.out
+*.o
+
+# macOS System Files
+.DS_Store
+
+# IDE Folders
+.idea/
+.vscode/
