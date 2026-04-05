@@ -59,3 +59,6 @@ clang++ -std=c++17 -I /opt/homebrew/include/eigen3 CorrelatedNoiseKF.cpp -o ckf_
 
 # Compile the Colored Noise Experiment
 clang++ -std=c++17 -I /opt/homebrew/include/eigen3 ColoredNoiseKF.cpp -o colored_tracker
+
+# Compile the Extended Kalman Filter
+clang++ -std=c++17 -I /opt/homebrew/include/eigen3 ExtendedKF.cpp -o Extended_KF
