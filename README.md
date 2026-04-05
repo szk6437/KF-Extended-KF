@@ -34,6 +34,15 @@ Standard filters assume process noise is purely white ($w_k \sim \mathcal{N}(0, 
   $$X_k = \begin{bmatrix} F & I \\ 0 & A_w \end{bmatrix} X_{k-1} + \begin{bmatrix} 0 \\ I \end{bmatrix} \xi_{k-1}$$
 By treating the colored disturbance as a trackable state, the filter actively estimates and rejects the autocorrelated environmental noise in real-time.
 
+## 4. Extended Kalman Filter (Nonlinear Bilinear System)
+**File:** `ExtendedKalmanFilter.cpp`
+
+Unlike the linear variants, this filter handles systems where the transition model and observation model are strictly non-linear functions ($f$ and $h$). It calculates the Jacobian matrices at every time step to artificially linearize the equations around the current working point using multivariate Taylor series expansions.
+
+* **System Model:** A 2D bilinear system where the scalar control input ($u$) couples directly into the state transition matrix ($x_k u_k$). 
+* **Observation Model:** Simulates a nonlinear Range and Bearing sensor:
+  $$z_k = \begin{bmatrix} \sqrt{x_{1,k}^2 + x_{2,k}^2} \\ \arctan(x_{2,k} / x_{1,k}) \end{bmatrix} + v_k$$
+* **Methodology:** Analytically computes the dynamic Jacobians $F_k = \frac{\partial f}{\partial x}$ and $H_k = \frac{\partial h}{\partial x}$ at each time step to propagate the Riccati equations, incorporating angular wrap-around handling for the bearing innovation.
 ---
 
 ## Dependencies & Compilation (macOS)
