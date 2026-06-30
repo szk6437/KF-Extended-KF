@@ -1,6 +1,6 @@
 # Kalman Filter Implementations (C++ / Eigen)
 
-This repository contains a collection of robust C++ implementations for state estimation, progressing from standard linear Kalman Filters to correlated noise models, and eventually Extended Kalman Filters (EKFs). All algorithms utilize the `Eigen3` linear algebra library for computationally efficient, full-matrix formulations.
+This repository contains a collection of robust C++ implementations for state estimation, progressing from standard linear Kalman Filters to correlated noise models, Extended Kalman Filters (EKFs), and Unscented Kalman Filters (UKFs). All algorithms utilize the `Eigen3` linear algebra library for computationally efficient, full-matrix formulations.
 
 ---
 
@@ -43,10 +43,33 @@ Unlike the linear variants, this filter handles systems where the transition mod
 * **Observation Model:** Simulates a nonlinear Range and Bearing sensor:
   $$z_k = \begin{bmatrix} \sqrt{x_{1,k}^2 + x_{2,k}^2} \\ \arctan(x_{2,k} / x_{1,k}) \end{bmatrix} + v_k$$
 * **Methodology:** Analytically computes the dynamic Jacobians $F_k = \frac{\partial f}{\partial x}$ and $H_k = \frac{\partial h}{\partial x}$ at each time step to propagate the Riccati equations, incorporating angular wrap-around handling for the bearing innovation.
+
+## 5. Unscented Kalman Filter (CTRV Model)
+**File:** `UnscentedKF.cpp`
+
+Unlike the EKF, which relies on first-order linear approximations (Jacobians) that can diverge under severe non-linearities, this implementation utilizes the Unscented Transform (UT). It achieves 3rd-order Taylor series accuracy for Gaussian inputs without requiring analytical derivatives.
+
+* **State Vector:** Tracks a maneuvering target using a Constant Turn Rate and Velocity (CTRV) kinematic model: $x = [p_x, p_y, v, \psi, \dot{\psi}]^T$.
+* **Process Model ($f$):** Evaluates non-linear state transitions $x_{k+1} = f(x_k, \Delta t)$. 
+  If $\dot{\psi} \neq 0$:
+  $$p_x^{(k+1)} = p_x^{(k)} + \frac{v}{\dot{\psi}} \left(\sin(\psi + \dot{\psi}\Delta t) - \sin(\psi)\right)$$
+  $$p_y^{(k+1)} = p_y^{(k)} + \frac{v}{\dot{\psi}} \left(-\cos(\psi + \dot{\psi}\Delta t) + \cos(\psi)\right)$$
+  If $\dot{\psi} = 0$ (Straight line approximation):
+  $$p_x^{(k+1)} = p_x^{(k)} + v \cos(\psi) \Delta t$$
+  $$p_y^{(k+1)} = p_y^{(k)} + v \sin(\psi) \Delta t$$
+  Velocity and yaw updates for both conditions:
+  $$v^{(k+1)} = v^{(k)}$$
+  $$\psi^{(k+1)} = \psi^{(k)} + \dot{\psi}\Delta t$$
+  $$\dot{\psi}^{(k+1)} = \dot{\psi}^{(k)}$$
+* **Observation Model ($h$):** Fuses polar radar measurements consisting of range and bearing $z = [r, \phi]^T$:
+  $$r = \sqrt{p_x^2 + p_y^2}$$
+  $$\phi = \arctan(p_y / p_x)$$
+* **Methodology:** Deterministically extracts $2n+1$ sigma points via Cholesky decomposition of the scaled state covariance matrix $P$. These points are propagated directly through the non-linear process and measurement equations. The transformed points are then recombined using specific weights to capture the posterior mean and covariance dynamically.
+
 ---
 
 ## Dependencies & Compilation (macOS)
-This project requires the **Eigen** linear algebra library. 
+This project requires the **Eigen3** linear algebra library for all matrix operations. 
 
 Compile the individual experiments using `clang++`, ensuring the compiler is linked to the Eigen include directory:
 
@@ -61,39 +84,7 @@ clang++ -std=c++17 -I /opt/homebrew/include/eigen3 CorrelatedNoiseKF.cpp -o ckf_
 clang++ -std=c++17 -I /opt/homebrew/include/eigen3 ColoredNoiseKF.cpp -o colored_tracker
 
 # Compile the Extended Kalman Filter
-clang++ -std=c++17 -I /opt/homebrew/include/eigen3 ExtendedKF.cpp -o Extended_KF
+clang++ -std=c++17 -I /opt/homebrew/include/eigen3 ExtendedKalmanFilter.cpp -o extended_kf
 
-
-# Unscented Kalman Filter (UKF) - CTRV Model
-
-A robust implementation of the Unscented Kalman Filter (UKF) in Python. This repository demonstrates state estimation for highly non-linear systems, tracking a maneuvering target using a Constant Turn Rate and Velocity (CTRV) model via polar radar measurements.
-
-## System Models
-
-### 1. Process Model (CTRV)
-The state vector is defined as $x = [p_x, p_y, v, \psi, \dot{\psi}]^T$, representing position, velocity magnitude, yaw angle, and yaw rate. 
-
-The non-linear state transition function $x_{k+1} = f(x_k, \Delta t)$ is:
-
-**If $\dot{\psi} \neq 0$:**
-$$p_x^{(k+1)} = p_x^{(k)} + \frac{v}{\dot{\psi}} \left( \sin(\psi + \dot{\psi}\Delta t) - \sin(\psi) \right)$$
-$$p_y^{(k+1)} = p_y^{(k)} + \frac{v}{\dot{\psi}} \left( -\cos(\psi + \dot{\psi}\Delta t) + \cos(\psi) \right)$$
-
-**If $\dot{\psi} = 0$ (Straight line):**
-$$p_x^{(k+1)} = p_x^{(k)} + v \cos(\psi) \Delta t$$
-$$p_y^{(k+1)} = p_y^{(k)} + v \sin(\psi) \Delta t$$
-
-**Velocity and Yaw Updates:**
-$$v^{(k+1)} = v^{(k)}$$
-$$\psi^{(k+1)} = \psi^{(k)} + \dot{\psi}\Delta t$$
-$$\dot{\psi}^{(k+1)} = \dot{\psi}^{(k)}$$
-
-### 2. Measurement Model
-The radar measures the target's polar coordinates $z = [r, \phi]^T$. The measurement function $z = h(x)$ is:
-$$r = \sqrt{p_x^2 + p_y^2}$$
-$$\phi = \text{arctan2}(p_y, p_x)$$
-
-## Dependencies
-* `numpy`
-* `scipy`
-* `matplotlib`
+# Compile the Unscented Kalman Filter
+clang++ -std=c++17 -I /opt/homebrew/include/eigen3 UnscentedKF.cpp -o unscented_kf
