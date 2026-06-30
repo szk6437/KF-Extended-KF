@@ -62,3 +62,38 @@ clang++ -std=c++17 -I /opt/homebrew/include/eigen3 ColoredNoiseKF.cpp -o colored
 
 # Compile the Extended Kalman Filter
 clang++ -std=c++17 -I /opt/homebrew/include/eigen3 ExtendedKF.cpp -o Extended_KF
+
+
+# Unscented Kalman Filter (UKF) - CTRV Model
+
+A robust implementation of the Unscented Kalman Filter (UKF) in Python. This repository demonstrates state estimation for highly non-linear systems, tracking a maneuvering target using a Constant Turn Rate and Velocity (CTRV) model via polar radar measurements.
+
+## System Models
+
+### 1. Process Model (CTRV)
+The state vector is defined as $x = [p_x, p_y, v, \psi, \dot{\psi}]^T$, representing position, velocity magnitude, yaw angle, and yaw rate. 
+
+The non-linear state transition function $x_{k+1} = f(x_k, \Delta t)$ is:
+
+**If $\dot{\psi} \neq 0$:**
+$$p_x^{(k+1)} = p_x^{(k)} + \frac{v}{\dot{\psi}} \left( \sin(\psi + \dot{\psi}\Delta t) - \sin(\psi) \right)$$
+$$p_y^{(k+1)} = p_y^{(k)} + \frac{v}{\dot{\psi}} \left( -\cos(\psi + \dot{\psi}\Delta t) + \cos(\psi) \right)$$
+
+**If $\dot{\psi} = 0$ (Straight line):**
+$$p_x^{(k+1)} = p_x^{(k)} + v \cos(\psi) \Delta t$$
+$$p_y^{(k+1)} = p_y^{(k)} + v \sin(\psi) \Delta t$$
+
+**Velocity and Yaw Updates:**
+$$v^{(k+1)} = v^{(k)}$$
+$$\psi^{(k+1)} = \psi^{(k)} + \dot{\psi}\Delta t$$
+$$\dot{\psi}^{(k+1)} = \dot{\psi}^{(k)}$$
+
+### 2. Measurement Model
+The radar measures the target's polar coordinates $z = [r, \phi]^T$. The measurement function $z = h(x)$ is:
+$$r = \sqrt{p_x^2 + p_y^2}$$
+$$\phi = \text{arctan2}(p_y, p_x)$$
+
+## Dependencies
+* `numpy`
+* `scipy`
+* `matplotlib`
